@@ -76,6 +76,19 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result)
         })
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'Forbidden access' })
+            }
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let admin = false;
+            if (user) {
+                admin = user?.role === 'admin';
+            }
+            res.send({ admin })
+        })
         app.get('/users', verifyToken, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result)

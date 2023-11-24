@@ -40,9 +40,19 @@ async function run() {
 
         // middleware 
         const verifyToken = (req, res, next) => {
-            // const token = req.headers.Authorization
+
             console.log(req.headers.authorization);
-            next()
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'Unauthorized access' })
+            }
+            const token = req.headers.authorization.split(' ')[1];
+            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+                if (err) {
+                    return res.status(403).send({ message: 'Forbidden access' })
+                }
+                req.decoded = decoded;
+                next()
+            })
         }
         //user related api
         app.post('/users', async (req, res) => {

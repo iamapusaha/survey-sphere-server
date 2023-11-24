@@ -35,8 +35,15 @@ async function run() {
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
                 expiresIn: '1h'
             })
-            res.send(token)
+            res.send({ token })
         })
+
+        // middleware 
+        const verifyToken = (req, res, next) => {
+            // const token = req.headers.Authorization
+            console.log(req.headers.authorization);
+            next()
+        }
         //user related api
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -48,7 +55,7 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result)
         })
-        app.get('/users', async (req, res) => {
+        app.get('/users', verifyToken, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result)
         })

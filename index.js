@@ -54,6 +54,17 @@ async function run() {
                 next()
             })
         }
+
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query);
+            const isAdmin = user?.email === 'admin'
+            if (!isAdmin) {
+                return res.status(403).send({ message: 'Forbidden access' })
+            }
+            next()
+        }
         //user related api
         app.post('/users', async (req, res) => {
             const user = req.body;

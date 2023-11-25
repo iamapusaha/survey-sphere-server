@@ -27,7 +27,8 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
         // Send a ping to confirm a successful connection
-        const userCollection = client.db('userDB').collection('users')
+        const userCollection = client.db('userDB').collection('users');
+        const surveyCollection = client.db('surveyDB').collection('surveys');
 
         // Auth related api 
         app.post('/jwt', async (req, res) => {
@@ -41,7 +42,7 @@ async function run() {
         // middleware 
         const verifyToken = (req, res, next) => {
 
-            console.log(req.headers.authorization);
+            // console.log(req.headers.authorization);
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'Unauthorized access' })
             }
@@ -76,7 +77,7 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result)
         })
-        app.get('/users/admin/:email', async (req, res) => {
+        app.get('/user/admin/:email', async (req, res) => {
             const email = req.params.email;
             if (email !== req.decoded.email) {
                 return res.status(403).send({ message: 'Forbidden access' })
@@ -91,6 +92,13 @@ async function run() {
         })
         app.get('/users', verifyToken, async (req, res) => {
             const result = await userCollection.find().toArray();
+            res.send(result)
+        })
+
+        //Survey related api
+        app.post('/surveys', async (req, res) => {
+            const survey = req.body;
+            const result = await surveyCollection.insertOne(survey);
             res.send(result)
         })
 

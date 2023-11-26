@@ -73,6 +73,11 @@ async function run() {
         //vote related api
         app.post('/votes', async (req, res) => {
             const vote = req.body;
+            const query = { email: vote.email }
+            const isExist = await voteCollection.findOne(query);
+            if (isExist) {
+                return res.send('user already voted on the survey!')
+            }
             const result = await voteCollection.insertOne(vote);
             res.send(result)
         })

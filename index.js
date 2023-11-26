@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 app.use(express.json())
@@ -60,13 +60,27 @@ async function run() {
             const email = req.decoded.email;
             const query = { email: email }
             const user = await userCollection.findOne(query);
-            const isAdmin = user?.email === 'admin'
+            const isAdmin = user?.role === 'admin'
             if (!isAdmin) {
+                console.log('tume mia admin na');
                 return res.status(403).send({ message: 'Forbidden access' })
             }
             next()
         }
         //user related api
+        app.patch('/users/role/:id', async (req, res) => {
+            const role = req.body.role;
+            console.log(role);
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: `${role}`
+                }
+            }
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result)
+        })
         app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
@@ -92,6 +106,13 @@ async function run() {
         })
         app.get('/users', verifyToken, async (req, res) => {
             const result = await userCollection.find().toArray();
+            res.send(result)
+        })
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const qurey = { _id: new ObjectId(id) }
+            const result = await userCollection.deleteOne(qurey);
+
             res.send(result)
         })
 

@@ -29,6 +29,8 @@ async function run() {
         // Send a ping to confirm a successful connection
         const userCollection = client.db('userDB').collection('users');
         const surveyCollection = client.db('surveyDB').collection('surveys');
+        const voteCollection = client.db('voteDB').collection('votes');
+
 
         // Auth related api 
         app.post('/jwt', async (req, res) => {
@@ -67,6 +69,13 @@ async function run() {
             }
             next()
         }
+
+        //vote related api
+        app.post('/votes', async (req, res) => {
+            const vote = req.body;
+            const result = await voteCollection.insertOne(vote);
+            res.send(result)
+        })
         //user related api
         app.patch('/users/role/:id', async (req, res) => {
             const role = req.body.role;
@@ -105,10 +114,6 @@ async function run() {
             }
             res.send({ admin })
         })
-        // app.get('/users', verifyToken, async (req, res) => {
-        //     const result = await userCollection.find().toArray();
-        //     res.send(result)
-        // })
         app.get('/users/:role?', async (req, res) => {
             let query = {};
             if (req.params.role) {
@@ -126,9 +131,13 @@ async function run() {
         })
 
         //Survey related api
-        app.post('/surveys', verifyToken, verifyAdmin, async (req, res) => {
+        app.post('/surveys', verifyToken, async (req, res) => {
             const survey = req.body;
             const result = await surveyCollection.insertOne(survey);
+            res.send(result)
+        })
+        app.get('/surveys', async (req, res) => {
+            const result = await surveyCollection.find().toArray()
             res.send(result)
         })
 

@@ -49,7 +49,7 @@ async function run() {
             const token = req.headers.authorization.split(' ')[1];
             jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
                 if (err) {
-                    return res.status(403).send({ message: 'Forbidden access' })
+                    return res.status(401).send({ message: 'Unauthorized access' })
                 }
                 req.decoded = decoded;
                 next()
@@ -77,7 +77,7 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result)
         })
-        app.get('/user/admin/:email', async (req, res) => {
+        app.get('/user/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             if (email !== req.decoded.email) {
                 return res.status(403).send({ message: 'Forbidden access' })
@@ -96,7 +96,7 @@ async function run() {
         })
 
         //Survey related api
-        app.post('/surveys', async (req, res) => {
+        app.post('/surveys', verifyToken, verifyAdmin, async (req, res) => {
             const survey = req.body;
             const result = await surveyCollection.insertOne(survey);
             res.send(result)

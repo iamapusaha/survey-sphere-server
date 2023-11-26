@@ -91,6 +91,7 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result)
         })
+        //check user admin or not
         app.get('/user/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             if (email !== req.decoded.email) {
@@ -104,8 +105,16 @@ async function run() {
             }
             res.send({ admin })
         })
-        app.get('/users', verifyToken, async (req, res) => {
-            const result = await userCollection.find().toArray();
+        // app.get('/users', verifyToken, async (req, res) => {
+        //     const result = await userCollection.find().toArray();
+        //     res.send(result)
+        // })
+        app.get('/users/:role?', async (req, res) => {
+            let query = {};
+            if (req.params.role) {
+                query.role = req.params.role
+            }
+            const result = await userCollection.find(query).toArray();
             res.send(result)
         })
         app.delete('/users/:id', async (req, res) => {

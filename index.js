@@ -79,7 +79,7 @@ async function run() {
                 for (let survey of surveys) {
                     const id = (survey._id);
                     const idv = id.toString();
-                    console.log(idv);
+                    // console.log(idv);
                     const query = { surveyId: idv }
 
                     const votes = await voteCollection.find(query).toArray();
@@ -110,17 +110,19 @@ async function run() {
             const result = await voteCollection.insertOne(vote);
             res.send(result)
         })
-        app.get('/votes/:surveyId', async (req, res) => {
-            const surveyId = req.params.surveyId;
+        // app.get('/votes/:surveyId', async (req, res) => {
+        //     const surveyId = req.params.surveyId;
 
-            // Count the total number of 'Yes' and 'No' votes for this survey
-            const totals = await voteCollection.aggregate([
-                { $match: { surveyId: surveyId } },
-                { $group: { _id: '$option', count: { $sum: 1 } } }
-            ]).toArray();
+        //     // Count the total number of 'Yes' and 'No' votes for this survey
+        //     const totals = await voteCollection.aggregate([
+        //         { $match: { surveyId: surveyId } },
+        //         { $group: { _id: '$option', count: { $sum: 1 } } }
+        //     ]).toArray();
 
-            res.send(totals); // [{ _id: 'Yes', count: 10 }, { _id: 'No', count: 5 }]
-        });
+        //     res.send(totals); // [{ _id: 'Yes', count: 10 }, { _id: 'No', count: 5 }]
+        // });
+
+
         //user related api
         app.patch('/users/role/:id', async (req, res) => {
             const role = req.body.role;
@@ -145,6 +147,8 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result)
         })
+
+
         //check user admin or not
         app.get('/user/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
@@ -175,6 +179,8 @@ async function run() {
             res.send(result)
         })
 
+
+
         //Survey related api
         app.post('/surveys', verifyToken, async (req, res) => {
             const survey = req.body;
@@ -185,6 +191,30 @@ async function run() {
             const result = await surveyCollection.find().toArray()
             res.send(result)
         })
+        app.get('/survey/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await surveyCollection.findOne(query);
+            res.send(result)
+        })
+        app.patch('/survey/likedis/:id', async (req, res) => {
+            const id = req.params.id;
+            const { like, dislike } = req.body;
+            const query = { _id: new ObjectId(id) }
+            const survey = await surveyCollection.findOne(query);
+
+            const totalLikes = survey.like + like;
+            const totalDislikes = survey.dislike + dislike;
+            const updateDoc = {
+                $set: {
+                    like: totalLikes,
+                    dislike: totalDislikes
+                }
+            }
+            const result = await surveyCollection.updateOne(query, updateDoc);
+            res.send(result)
+        })
+
 
 
         await client.db("admin").command({ ping: 1 });

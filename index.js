@@ -71,9 +71,38 @@ async function run() {
         }
 
         //vote related api
+        app.get('/api/surveys', async (req, res) => {
+            try {
+                const surveys = await surveyCollection.find({}).toArray();
+                const results = [];
+
+                for (let survey of surveys) {
+                    const id = (survey._id);
+                    const idv = id.toString();
+                    console.log(idv);
+                    const query = { surveyId: idv }
+
+                    const votes = await voteCollection.find(query).toArray();
+                    const yesVotes = votes.filter(vote => vote.option === 'yes').length;
+                    const noVotes = votes.filter(vote => vote.option === 'no').length;
+
+                    results.push({
+                        ...survey,
+                        totalVotes: votes.length,
+                        yesVotes,
+                        noVotes,
+                    });
+                }
+
+                res.json(results);
+            } catch (err) {
+                console.error(err);
+                res.status(500).send('An error occurred while fetching data');
+            }
+        });
         app.post('/votes', async (req, res) => {
             const vote = req.body;
-            const query = { email: vote.email }
+            const query = { surveyId: vote.surveyId, email: vote.email }
             const isExist = await voteCollection.findOne(query);
             if (isExist) {
                 return res.send('user already voted on the survey!')
@@ -81,6 +110,17 @@ async function run() {
             const result = await voteCollection.insertOne(vote);
             res.send(result)
         })
+        app.get('/votes/:surveyId', async (req, res) => {
+            const surveyId = req.params.surveyId;
+
+            // Count the total number of 'Yes' and 'No' votes for this survey
+            const totals = await voteCollection.aggregate([
+                { $match: { surveyId: surveyId } },
+                { $group: { _id: '$option', count: { $sum: 1 } } }
+            ]).toArray();
+
+            res.send(totals); // [{ _id: 'Yes', count: 10 }, { _id: 'No', count: 5 }]
+        });
         //user related api
         app.patch('/users/role/:id', async (req, res) => {
             const role = req.body.role;

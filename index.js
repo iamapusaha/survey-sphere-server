@@ -214,6 +214,23 @@ async function run() {
             const result = await surveyCollection.updateOne(query, updateDoc);
             res.send(result)
         })
+        app.patch('/survey/comment/:id', async (req, res) => {
+            const id = req.params.id;
+            const comment = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $push: {
+                    comments: {
+                        user: comment.user,
+                        email: comment.email,
+                        comment: comment.comment
+                    }
+                }
+            }
+            const result = await surveyCollection.updateOne(filter, updateDoc);
+            res.send(result)
+
+        })
 
 
 

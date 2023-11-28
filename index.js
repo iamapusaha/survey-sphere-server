@@ -42,6 +42,7 @@ async function run() {
         })
 
         // middleware 
+        // verify token 
         const verifyToken = (req, res, next) => {
 
             // console.log(req.headers.authorization);
@@ -57,7 +58,7 @@ async function run() {
                 next()
             })
         }
-
+        // verify admin 
         const verifyAdmin = async (req, res, next) => {
             const email = req.decoded.email;
             const query = { email: email }
@@ -70,91 +71,8 @@ async function run() {
             next()
         }
 
-        //vote related api
-        app.get('/api/surveys', async (req, res) => {
-            try {
-                const surveys = await surveyCollection.find({}).toArray();
-                const results = [];
-
-                for (let survey of surveys) {
-                    const id = (survey._id);
-                    const idv = id.toString();
-                    // console.log(idv);
-                    const query = { surveyId: idv }
-
-                    const votes = await voteCollection.find(query).toArray();
-                    const yesVotes = votes.filter(vote => vote.option === 'yes').length;
-                    const noVotes = votes.filter(vote => vote.option === 'no').length;
-
-                    results.push({
-                        ...survey,
-                        totalVotes: votes.length,
-                        yesVotes,
-                        noVotes,
-                    });
-                }
-
-                res.send(results);
-            } catch (err) {
-                console.error(err);
-                res.status(500).send('An error occurred while fetching data');
-            }
-        });
-
-        // for one data by id 
-        app.get('/api/surveys/:id', async (req, res) => {
-            try {
-                const id = req.params.id;
-                const survey = await surveyCollection.findOne({ _id: new ObjectId(id) });
-
-                if (!survey) {
-                    res.status(404).send('Survey not found');
-                    return;
-                }
-
-                const query = { surveyId: id };
-                const votes = await voteCollection.find(query).toArray();
-                const yesVotes = votes.filter(vote => vote.option === 'yes').length;
-                const noVotes = votes.filter(vote => vote.option === 'no').length;
-
-                const result = {
-                    ...survey,
-                    totalVotes: votes.length,
-                    yesVotes,
-                    noVotes,
-                };
-
-                res.send(result);
-            } catch (err) {
-                console.error(err);
-                res.status(500).send('An error occurred while fetching data');
-            }
-        });
-
-        app.post('/votes', async (req, res) => {
-            const vote = req.body;
-            const query = { surveyId: vote.surveyId, email: vote.email }
-            const isExist = await voteCollection.findOne(query);
-            if (isExist) {
-                return res.send('user already voted on the survey!')
-            }
-            const result = await voteCollection.insertOne(vote);
-            res.send(result)
-        })
-        // app.get('/votes/:surveyId', async (req, res) => {
-        //     const surveyId = req.params.surveyId;
-
-        //     // Count the total number of 'Yes' and 'No' votes for this survey
-        //     const totals = await voteCollection.aggregate([
-        //         { $match: { surveyId: surveyId } },
-        //         { $group: { _id: '$option', count: { $sum: 1 } } }
-        //     ]).toArray();
-
-        //     res.send(totals); // [{ _id: 'Yes', count: 10 }, { _id: 'No', count: 5 }]
-        // });
-
-
         //user related api
+        // api for change user role
         app.patch('/users/role/:id', async (req, res) => {
             const role = req.body.role;
             console.log(role);
@@ -168,6 +86,7 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result)
         })
+        // api for added user 
         app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
@@ -180,7 +99,7 @@ async function run() {
         })
 
 
-        //check user admin or not
+        //api for check user admin or not
         app.get('/user/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             if (email !== req.decoded.email) {
@@ -194,6 +113,7 @@ async function run() {
             }
             res.send({ admin })
         })
+        // api for get all users, or get usr by his.her role
         app.get('/users/:role?', async (req, res) => {
             let query = {};
             if (req.params.role) {
@@ -202,6 +122,7 @@ async function run() {
             const result = await userCollection.find(query).toArray();
             res.send(result)
         })
+        // api for delete user
         app.delete('/users/:id', async (req, res) => {
             const id = req.params.id;
             const qurey = { _id: new ObjectId(id) }
@@ -213,21 +134,25 @@ async function run() {
 
 
         //Survey related api
+        // a api for post a survey 
         app.post('/surveys', verifyToken, async (req, res) => {
             const survey = req.body;
             const result = await surveyCollection.insertOne(survey);
             res.send(result)
         })
+        // api for get all surveys 
         app.get('/surveys', async (req, res) => {
             const result = await surveyCollection.find().toArray()
             res.send(result)
         })
+        // api for get survey by id
         app.get('/survey/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await surveyCollection.findOne(query);
             res.send(result)
         })
+        // api for added like or dislike
         app.patch('/survey/likedis/:id', async (req, res) => {
             const id = req.params.id;
             const { like, dislike } = req.body;
@@ -245,6 +170,7 @@ async function run() {
             const result = await surveyCollection.updateOne(query, updateDoc);
             res.send(result)
         })
+        // api for added comment
         app.patch('/survey/comment/:id', async (req, res) => {
             const id = req.params.id;
             const comment = req.body;
@@ -262,42 +188,7 @@ async function run() {
             res.send(result)
 
         })
-        // app.patch('/survey/vote/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const { vote, user } = req.body;
-        //     const { name, email, timestamp, option } = user;
-        //     const { yes, no } = vote;
-        //     const filter = { _id: new ObjectId(id) }
-        //     const collection = await surveyCollection.findOne(filter);
-        //     const hasVoted = collection.comments.some(
-        //         (c) => c.email === email,
-        //     );
-        //     if (hasVoted) {
-        //         return res.status(400).send({ message: 'User has already voted' });
-        //     }
-        //     const totalYes = collection.yes + yes;
-        //     const totalNo = collection.no + no;
-        //     const totalVote = totalYes + totalNo;
-        //     const updateDoc = {
-        //         $set: {
-        //             totalVote,
-        //             yes: totalYes,
-        //             no: totalNo
-        //         },
-        //         $push: {
-        //             votes: {
-        //                 user: name,
-        //                 email,
-        //                 timestamp,
-        //                 option
-        //             }
-        //         }
-
-        //     }
-        //     const result = await surveyCollection.updateOne(filter, updateDoc);
-        //     res.send(result)
-
-        // })
+        //api for added vote
         app.patch('/survey/vote/:id', async (req, res) => {
             const id = req.params.id;
             const { vote, user } = req.body;

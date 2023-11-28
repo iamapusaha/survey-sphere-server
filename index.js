@@ -262,6 +262,37 @@ async function run() {
             const result = await surveyCollection.updateOne(filter, updateDoc);
             res.send(result)
         })
+        app.patch('/survey/feedback/:id', async (req, res) => {
+            const id = req.params.id;
+            const { status, feedback } = req.body;
+            const filter = { _id: new ObjectId(id) }
+
+            let updateDoc = {
+                $set: {
+                    status: status
+                }
+            }
+
+            if (status === 'unpublish' && feedback) {
+                updateDoc.$push = {
+                    feedbacks: {
+                        id: uuid.v4(),
+                        feed: feedback
+                    }
+                }
+            } else if (status === 'publish') {
+                updateDoc.$set = {
+                    status: status,
+                    feedbacks: []
+                }
+            }
+
+            const result = await surveyCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
+
+
 
 
         await client.db("admin").command({ ping: 1 });

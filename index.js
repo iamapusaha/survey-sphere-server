@@ -94,12 +94,43 @@ async function run() {
                     });
                 }
 
-                res.json(results);
+                res.send(results);
             } catch (err) {
                 console.error(err);
                 res.status(500).send('An error occurred while fetching data');
             }
         });
+
+        // for one data by id 
+        app.get('/api/surveys/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const survey = await surveyCollection.findOne({ _id: new ObjectId(id) });
+
+                if (!survey) {
+                    res.status(404).send('Survey not found');
+                    return;
+                }
+
+                const query = { surveyId: id };
+                const votes = await voteCollection.find(query).toArray();
+                const yesVotes = votes.filter(vote => vote.option === 'yes').length;
+                const noVotes = votes.filter(vote => vote.option === 'no').length;
+
+                const result = {
+                    ...survey,
+                    totalVotes: votes.length,
+                    yesVotes,
+                    noVotes,
+                };
+
+                res.send(result);
+            } catch (err) {
+                console.error(err);
+                res.status(500).send('An error occurred while fetching data');
+            }
+        });
+
         app.post('/votes', async (req, res) => {
             const vote = req.body;
             const query = { surveyId: vote.surveyId, email: vote.email }
@@ -231,7 +262,84 @@ async function run() {
             res.send(result)
 
         })
+        // app.patch('/survey/vote/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const { vote, user } = req.body;
+        //     const { name, email, timestamp, option } = user;
+        //     const { yes, no } = vote;
+        //     const filter = { _id: new ObjectId(id) }
+        //     const collection = await surveyCollection.findOne(filter);
+        //     const hasVoted = collection.comments.some(
+        //         (c) => c.email === email,
+        //     );
+        //     if (hasVoted) {
+        //         return res.status(400).send({ message: 'User has already voted' });
+        //     }
+        //     const totalYes = collection.yes + yes;
+        //     const totalNo = collection.no + no;
+        //     const totalVote = totalYes + totalNo;
+        //     const updateDoc = {
+        //         $set: {
+        //             totalVote,
+        //             yes: totalYes,
+        //             no: totalNo
+        //         },
+        //         $push: {
+        //             votes: {
+        //                 user: name,
+        //                 email,
+        //                 timestamp,
+        //                 option
+        //             }
+        //         }
 
+        //     }
+        //     const result = await surveyCollection.updateOne(filter, updateDoc);
+        //     res.send(result)
+
+        // })
+        app.patch('/survey/vote/:id', async (req, res) => {
+            const id = req.params.id;
+            const { vote, user } = req.body;
+            const { name, email, timestamp, option } = user;
+            const { yes, no } = vote;
+            const filter = { _id: new ObjectId(id) }
+            const collection = await surveyCollection.findOne(filter);
+
+            // Check if the user has already voted
+            const hasVoted = collection.votes.some(
+                (v) => v.email === email,
+            );
+            if (hasVoted) {
+                return res.send({ message: 'User has already voted' });
+            }
+
+            // Calculate the new vote totals
+            const totalYes = collection.yes + yes;
+            const totalNo = collection.no + no;
+            const totalVote = totalYes + totalNo;
+
+            // Prepare the update document
+            const updateDoc = {
+                $set: {
+                    totalVote,
+                    yes: totalYes,
+                    no: totalNo
+                },
+                $push: {
+                    votes: {
+                        user: name,
+                        email,
+                        timestamp,
+                        option
+                    }
+                }
+            }
+
+            // Update the survey document
+            const result = await surveyCollection.updateOne(filter, updateDoc);
+            res.send(result)
+        })
 
 
         await client.db("admin").command({ ping: 1 });

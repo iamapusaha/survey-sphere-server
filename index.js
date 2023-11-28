@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const jwt = require('jsonwebtoken');
+const uuid = require('uuid');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
@@ -193,9 +194,28 @@ async function run() {
             const updateDoc = {
                 $push: {
                     comments: {
+                        id: uuid.v4(),
                         user: comment.user,
                         email: comment.email,
                         comment: comment.comment
+                    }
+                }
+            }
+            const result = await surveyCollection.updateOne(filter, updateDoc);
+            res.send(result)
+
+        })
+        app.patch('/survey/report/:id', async (req, res) => {
+            const id = req.params.id;
+            const report = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $push: {
+                    reports: {
+                        id: uuid.v4(),
+                        user: report.user,
+                        email: report.email,
+                        report: report.report
                     }
                 }
             }

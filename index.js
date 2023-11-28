@@ -99,20 +99,35 @@ async function run() {
         })
 
 
-        //api for check user admin or not
-        app.get('/user/admin/:email', verifyToken, async (req, res) => {
+        //api for check user role
+
+        app.get('/user/role/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             if (email !== req.decoded.email) {
                 return res.status(403).send({ message: 'Forbidden access' })
             }
             const query = { email: email };
             const user = await userCollection.findOne(query);
-            let admin = false;
+            let role = {};
             if (user) {
-                admin = user?.role === 'admin';
+                switch (user.role) {
+                    case 'admin':
+                        role = { admin: true };
+                        break;
+                    case 'pro-user':
+                        role = { proUser: true };
+                        break;
+                    case 'surveyor':
+                        role = { surveyor: true };
+                        break;
+                    default:
+                        role = { user: true };
+                }
             }
-            res.send({ admin })
+            res.send(role)
         })
+
+
         // api for get all users, or get usr by his.her role
         app.get('/users/:role?', async (req, res) => {
             let query = {};
@@ -197,7 +212,6 @@ async function run() {
             const filter = { _id: new ObjectId(id) }
             const collection = await surveyCollection.findOne(filter);
 
-            // Check if the user has already voted
             const hasVoted = collection.votes.some(
                 (v) => v.email === email,
             );
@@ -205,12 +219,10 @@ async function run() {
                 return res.send({ message: 'User has already voted' });
             }
 
-            // Calculate the new vote totals
             const totalYes = collection.yes + yes;
             const totalNo = collection.no + no;
             const totalVote = totalYes + totalNo;
 
-            // Prepare the update document
             const updateDoc = {
                 $set: {
                     totalVote,
@@ -227,7 +239,6 @@ async function run() {
                 }
             }
 
-            // Update the survey document
             const result = await surveyCollection.updateOne(filter, updateDoc);
             res.send(result)
         })

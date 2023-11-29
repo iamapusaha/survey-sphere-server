@@ -71,6 +71,19 @@ async function run() {
             }
             next()
         }
+        // verify admin or surveyor
+        const verifyAdminOrSurveyor = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query);
+            const isAllowedRole = user?.role === 'admin' || user?.role === 'surveyor';
+            if (!isAllowedRole) {
+                console.log('You are not an admin or surveyor');
+                return res.status(403).send({ message: 'Forbidden access' })
+            }
+            next()
+        }
+
 
         //user related api
         // api for change user role
@@ -151,16 +164,19 @@ async function run() {
 
         //Survey related api
         // a api for post a survey 
+
         app.post('/surveys', verifyToken, async (req, res) => {
             const survey = req.body;
             const result = await surveyCollection.insertOne(survey);
             res.send(result)
         })
+
         // api for get all surveys 
         app.get('/surveys', async (req, res) => {
             const result = await surveyCollection.find().toArray()
             res.send(result)
         })
+
         // api for get survey by id
         app.get('/survey/:id', async (req, res) => {
             const id = req.params.id;
@@ -246,6 +262,7 @@ async function run() {
             const updateDoc = {
                 $set: {
                     totalVote,
+                    timestamp,
                     yes: totalYes,
                     no: totalNo
                 },

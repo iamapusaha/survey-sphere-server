@@ -143,7 +143,7 @@ async function run() {
 
 
         // api for get all users, or get usr by his.her role
-        app.get('/users/:role?', async (req, res) => {
+        app.get('/users/:role?', verifyToken, verifyAdmin, async (req, res) => {
             let query = {};
             if (req.params.role) {
                 query.role = req.params.role
@@ -316,7 +316,22 @@ async function run() {
             res.send(result)
         })
 
-
+        app.patch('/update/survey/:id', async (req, res) => {
+            const id = req.params.id;
+            const { title, description, image, category, expireIn } = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    title,
+                    description,
+                    image,
+                    category,
+                    expireIn
+                }
+            }
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result)
+        })
 
 
 

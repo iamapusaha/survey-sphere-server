@@ -307,6 +307,14 @@ async function run() {
             const result = await surveyCollection.updateOne(filter, updateDoc);
             res.send(result);
         });
+        // Delete a Survey 
+        app.delete('/survey/:id', async (req, res) => {
+            const id = req.params.id;
+            const qurey = { _id: new ObjectId(id) }
+            const result = await surveyCollection.deleteOne(qurey);
+
+            res.send(result)
+        })
 
 
 

@@ -87,7 +87,7 @@ async function run() {
 
         //user related api
         // api for change user role
-        app.patch('/users/role/:id', async (req, res) => {
+        app.patch('/users/role/:id', verifyToken, verifyAdminOrSurveyor, async (req, res) => {
             const role = req.body.role;
             console.log(role);
             const id = req.params.id;
@@ -101,7 +101,7 @@ async function run() {
             res.send(result)
         })
         // api for added user 
-        app.post('/users', async (req, res) => {
+        app.post('/users', verifyToken, verifyAdminOrSurveyor, async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
             const isExist = await userCollection.findOne(query);
@@ -143,7 +143,7 @@ async function run() {
 
 
         // api for get all users, or get usr by his.her role
-        app.get('/users/:role?', verifyToken, verifyAdmin, async (req, res) => {
+        app.get('/users/:role?', verifyToken, verifyAdminOrSurveyor, async (req, res) => {
             let query = {};
             if (req.params.role) {
                 query.role = req.params.role
@@ -152,7 +152,7 @@ async function run() {
             res.send(result)
         })
         // api for delete user
-        app.delete('/users/:id', async (req, res) => {
+        app.delete('/users/:id', verifyToken, verifyAdminOrSurveyor, async (req, res) => {
             const id = req.params.id;
             const qurey = { _id: new ObjectId(id) }
             const result = await userCollection.deleteOne(qurey);

@@ -101,7 +101,7 @@ async function run() {
             res.send(result)
         })
         // api for added user 
-        app.post('/users', verifyToken, async (req, res) => {
+        app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
             const isExist = await userCollection.findOne(query);
@@ -115,7 +115,7 @@ async function run() {
 
         //api for check user role
 
-        app.get('/user/role/:email', verifyToken, async (req, res) => {
+        app.get('/user/role/:email', async (req, res) => {
             const email = req.params.email;
             if (email !== req.decoded.email) {
                 return res.status(403).send({ message: 'Forbidden access' })

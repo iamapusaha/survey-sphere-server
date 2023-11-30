@@ -182,6 +182,14 @@ async function run() {
             const result = await surveyCollection.find(query).toArray()
             res.send(result)
         })
+        //api for to get top voted data and 6 data only
+        app.get('/top/6/surveys', async (req, res) => {
+            const query = { status: 'publish' }
+            const sortData = { totalVote: -1 }
+            const result = await surveyCollection.find(query).sort(sortData).limit(6).toArray()
+            res.send(result)
+        })
+
 
         // api for get survey by id
         app.get('/survey/:id', async (req, res) => {

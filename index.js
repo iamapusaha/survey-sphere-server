@@ -176,6 +176,12 @@ async function run() {
             const result = await surveyCollection.find().toArray()
             res.send(result)
         })
+        //api for get all publish surveys data
+        app.get('/publish/surveys', async (req, res) => {
+            const query = { status: 'publish' }
+            const result = await surveyCollection.find(query).toArray()
+            res.send(result)
+        })
 
         // api for get survey by id
         app.get('/survey/:id', async (req, res) => {

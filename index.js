@@ -189,6 +189,13 @@ async function run() {
             const result = await surveyCollection.find(query).sort(sortData).limit(6).toArray()
             res.send(result)
         })
+        // api for get recent 6 data
+        app.get('/recent/surveys', async (req, res) => {
+            const query = { status: 'publish' }
+            const sortData = { timestamp: -1 }
+            const result = await surveyCollection.find(query).sort(sortData).limit(6).toArray()
+            res.send(result)
+        })
 
 
         // api for get survey by id

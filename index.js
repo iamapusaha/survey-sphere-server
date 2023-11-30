@@ -172,25 +172,25 @@ async function run() {
         })
 
         // api for get all surveys 
-        app.get('/surveys', async (req, res) => {
+        app.get('/surveys', verifyToken, async (req, res) => {
             const result = await surveyCollection.find().toArray()
             res.send(result)
         })
         //api for get all publish surveys data
-        app.get('/publish/surveys', async (req, res) => {
+        app.get('/publish/surveys', verifyToken, async (req, res) => {
             const query = { status: 'publish' }
             const result = await surveyCollection.find(query).toArray()
             res.send(result)
         })
         //api for to get top voted data and 6 data only
-        app.get('/top/6/surveys', async (req, res) => {
+        app.get('/top/6/surveys', verifyToken, async (req, res) => {
             const query = { status: 'publish' }
             const sortData = { totalVote: -1 }
             const result = await surveyCollection.find(query).sort(sortData).limit(6).toArray()
             res.send(result)
         })
         // api for get recent 6 data
-        app.get('/recent/surveys', async (req, res) => {
+        app.get('/recent/surveys', verifyToken, async (req, res) => {
             const query = { status: 'publish' }
             const sortData = { timestamp: -1 }
             const result = await surveyCollection.find(query).sort(sortData).limit(6).toArray()
@@ -199,14 +199,14 @@ async function run() {
 
 
         // api for get survey by id
-        app.get('/survey/:id', async (req, res) => {
+        app.get('/survey/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await surveyCollection.findOne(query);
             res.send(result)
         })
         // api for added like or dislike
-        app.patch('/survey/likedis/:id', async (req, res) => {
+        app.patch('/survey/likedis/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const { like, dislike } = req.body;
             const query = { _id: new ObjectId(id) }
@@ -224,7 +224,7 @@ async function run() {
             res.send(result)
         })
         // api for added comment
-        app.patch('/survey/comment/:id', async (req, res) => {
+        app.patch('/survey/comment/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const comment = req.body;
             const filter = { _id: new ObjectId(id) };
@@ -242,7 +242,7 @@ async function run() {
             res.send(result)
 
         })
-        app.patch('/survey/report/:id', async (req, res) => {
+        app.patch('/survey/report/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const report = req.body;
             const filter = { _id: new ObjectId(id) };
@@ -261,7 +261,7 @@ async function run() {
 
         })
         //api for added vote
-        app.patch('/survey/vote/:id', async (req, res) => {
+        app.patch('/survey/vote/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const { vote, user } = req.body;
             const { name, email, timestamp, option } = user;
@@ -300,7 +300,7 @@ async function run() {
             const result = await surveyCollection.updateOne(filter, updateDoc);
             res.send(result)
         })
-        app.patch('/survey/feedback/:id', async (req, res) => {
+        app.patch('/survey/feedback/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const { status, feedback } = req.body;
             const filter = { _id: new ObjectId(id) }
@@ -329,7 +329,7 @@ async function run() {
             res.send(result);
         });
         // Delete a Survey 
-        app.delete('/survey/:id', async (req, res) => {
+        app.delete('/survey/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const qurey = { _id: new ObjectId(id) }
             const result = await surveyCollection.deleteOne(qurey);
@@ -337,7 +337,7 @@ async function run() {
             res.send(result)
         })
 
-        app.patch('/update/survey/:id', async (req, res) => {
+        app.patch('/update/survey/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const { title, description, image, category, expireIn } = req.body;
             const filter = { _id: new ObjectId(id) };

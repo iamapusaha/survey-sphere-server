@@ -165,7 +165,7 @@ async function run() {
         //Survey related api
         // a api for post a survey 
 
-        app.post('/surveys', verifyToken, async (req, res) => {
+        app.post('/surveys', verifyToken, verifyAdminOrSurveyor, async (req, res) => {
             const survey = req.body;
             const result = await surveyCollection.insertOne(survey);
             res.send(result)
